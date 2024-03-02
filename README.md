@@ -39,6 +39,7 @@ python Tools/Preprocess/extract_spk_emb.py
 ```
 - Step3. Inference 
 1. Preprocess the samples for inference following Step 1. The IDs of the preprocessed samples can be found in the files "test_src_speakers.txt" and "test_tar_speakers.txt."
+3. Pretrained FVMVC can be found in [here](https://drive.google.com/file/d/1jgTCIa-78SRm6J3uxaah6DdQe4frtUeX/view?usp=drive_link)
 
 2. Runing inference
 ```
