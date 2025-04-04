@@ -8,26 +8,19 @@ from src.dataset import FaceSpeech_dataset
 from models.vqmivc_encoder import Encoder, CPCLoss_sameSeq, Encoder_lf0
 from models.vqmivc_decoder import Decoder_ac
 from models import FACE_ENCODER
-from models.vqmivc_mi_estimators import CLUBSample_group, CLUBSample_reshape
 from src.logger import Logger
 from torch.nn import DataParallel as DP
 from torch.utils.data import DataLoader
 from collections import OrderedDict
 import numpy as np
-from torch.autograd import grad
 import copy
 from glob import glob
 from tqdm import tqdm
-import soundfile as sf
 from itertools import chain
 from pathlib import Path
 from src.scheduler import WarmupScheduler
 import kaldiio
-from Tools.preprocess.pwg_vqmivc_spectrogram import logmelspectrogram
-import resampy
-import pyworld as pw
 import subprocess
-import matplotlib.pyplot as plt
 from Experiment.experiment_tools import extract_logmel, seed_worker
 
 
@@ -485,16 +478,11 @@ class Facevoice_memory_vqmivc_pretrain_pseudo(ExperimentBuilder):
         
         self.src_speaker_dict, self.tar_speaker_dict, select_src_wav_paths, select_tar_wav_paths = self.get_src_tar_paths(infer_dataset=self.infer_dataset)
         checkpoint_model_name = self.config.get("output", "checkpoint")
-        if 'Best' in checkpoint_model_name:
-            checkpoint_path = os.path.join(self.output_root, self.output_path[2:], 'models', checkpoint_model_name)
-        else:
-            checkpoint_path = os.path.join(self.output_root, self.output_path[2:], 'models', 'checkpoint', checkpoint_model_name)
-        
-        output_dir = os.path.join(self.output_root, self.output_path[2:],'wav_'+checkpoint_model_name.split('-')[-1][:-3])
+        output_dir = os.path.join(self.output_path, 'wav')
         print('Load From:')
-        print(checkpoint_path)
+        print(checkpoint_model_name)
         os.makedirs(output_dir, exist_ok=True)
-        checkpoint = torch.load(checkpoint_path, map_location=lambda storage, loc: storage)
+        checkpoint = torch.load(checkpoint_model_name, map_location=lambda storage, loc: storage)
         self.encoder.load_state_dict(checkpoint['encoder'])
         self.encoder_spk.load_state_dict(checkpoint['encoder_spk'])
         self.decoder.load_state_dict(checkpoint['decoder'])

@@ -1,6 +1,5 @@
-from experiment import EXPERIMENTS
+from Experiment.experiment_memory_vqmivc_pretrain_pseudo import Facevoice_memory_vqmivc_pretrain_pseudo
 from configparser import ConfigParser
-from shutil import copyfile
 import warnings
 import argparse
 import os
@@ -19,5 +18,5 @@ if __name__ == "__main__":
     config = ConfigParser()
     config.read(os.path.join(args.config_file))
 
-    cur_exp = EXPERIMENTS[config.get("model","exp_type")](config)
+    cur_exp = Facevoice_memory_vqmivc_pretrain_pseudo(config)
     cur_exp.run_inference()

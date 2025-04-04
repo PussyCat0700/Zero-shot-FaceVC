@@ -25,11 +25,8 @@ if __name__ == '__main__':
         checkpoint = config.get("output", "checkpoint")
     except:
         print(' Change config file done ')
-        ckpt_names = glob(os.path.join(args.output_root, config.get("output","output_dir")[2:],"models/checkpoint/*.pt"))
-        ckpt_epoches = [int(os.path.basename(i).split("-")[1][:-3]) for i in ckpt_names]
-        ckpt_epoch = max(ckpt_epoches)
         config.set("input","is_train","False")
-        config.set("output","checkpoint","model.ckpt-{}.pt".format(ckpt_epoch))
+        config.set("output","checkpoint",os.path.join(args.output_root, "checkpoint.pt"))
         config.set("hparams","infer_gpu", args.inference_gpu)
         with open(conf_path,'w') as configfile:
             config.write(configfile)
