@@ -73,23 +73,18 @@ def save_logmel(save_root, wav_name, melinfo, mode):
     return mel_len, mel_save_path, lf0_save_path
 
 
-data_root = 'Dataset/LRS3/pretrain_wav_200'
-save_root = 'Dataset/LRS3/pwg_vqmivc'
-vaild_data_root = 'Dataset/LRS3/trainval_wav_200'
+data_root = '/data0/yfliu/lrs3/audio/test'
+save_root = '/data0/yfliu/lrs3/pwg_vqmivc'
 os.makedirs(save_root, exist_ok=True)
 
-train_wavs_names = [path.split('/')[-2] + '_' + os.path.basename(path)[:-4] for path in glob(os.path.join(data_root,"*/*.wav"))]
-valid_wavs_names = [path.split('/')[-2] + '_' + os.path.basename(path)[:-4] for path in glob(os.path.join(vaild_data_root,"*/*.wav"))]
-print(len(train_wavs_names))
+wavs_names = [path.split('/')[-2] + '_' + os.path.basename(path)[:-4] for path in glob(os.path.join(data_root,"*/*.wav"))]
+print(len(wavs_names))
 
 # extract log-mel
 print('extract log-mel...')
 train_all_wavs = glob(f'{data_root}/*/*.wav')
-vaild_all_wavs = glob(f'{vaild_data_root}/*/*.wav')
 all_wavs = []
 for i in train_all_wavs:
-    all_wavs.append(i)
-for i in vaild_all_wavs:
     all_wavs.append(i)
 
 
@@ -104,7 +99,7 @@ for r in results:
 print('normalize log-mel...')
 mels = []
 spk2lf0 = {}
-for wav_name in train_wavs_names:
+for wav_name in wavs_names:
     mel, _, _ = wn2mel[wav_name]
     mels.append(mel)
 
@@ -124,9 +119,9 @@ for r in results:
 
 # save log-mel
 print('save log-mel...')
-train_results = Parallel(n_jobs=-1)(delayed(save_logmel)(save_root, wav_name, wn2mel_new[wav_name], 'train') for wav_name in tqdm(train_wavs_names))
-valid_results = Parallel(n_jobs=-1)(delayed(save_logmel)(save_root, wav_name, wn2mel_new[wav_name], 'valid') for wav_name in tqdm(valid_wavs_names))
-# test_results = Parallel(n_jobs=-1)(delayed(save_logmel)(save_root, wav_name, wn2mel_new[wav_name], 'test') for wav_name in tqdm(test_wavs_names))
+# train_results = Parallel(n_jobs=-1)(delayed(save_logmel)(save_root, wav_name, wn2mel_new[wav_name], 'train') for wav_name in tqdm(train_wavs_names))
+# valid_results = Parallel(n_jobs=-1)(delayed(save_logmel)(save_root, wav_name, wn2mel_new[wav_name], 'valid') for wav_name in tqdm(valid_wavs_names))
+test_results = Parallel(n_jobs=-1)(delayed(save_logmel)(save_root, wav_name, wn2mel_new[wav_name], 'test') for wav_name in tqdm(wavs_names))
 
 
 def save_json(save_root, results, mode):
@@ -135,8 +130,9 @@ def save_json(save_root, results, mode):
     fp.close()
     
 
-save_json(save_root, train_results, 'train_200')
-save_json(save_root, valid_results, 'valid_200')
+# save_json(save_root, train_results, 'train_200')
+# save_json(save_root, valid_results, 'valid_200')
+save_json(save_root, test_results, 'test_200')
 
 
     

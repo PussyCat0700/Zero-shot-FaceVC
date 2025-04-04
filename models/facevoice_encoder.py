@@ -18,6 +18,7 @@ class facevoice_memorynet(nn.Module):
         self.speech_value_memory = nn.Parameter(torch.FloatTensor(slot_size, slot_channel_size))
         self.face_key_memory = nn.Parameter(torch.FloatTensor(slot_size, slot_channel_size))
         self.slot_size = slot_size
+        self.if_attribute = False
         init.normal_(self.speech_value_memory, mean=0, std=0.5)
         init.normal_(self.face_key_memory, mean=0, std=0.5)
 

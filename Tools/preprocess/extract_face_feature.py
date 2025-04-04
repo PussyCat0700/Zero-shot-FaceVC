@@ -61,11 +61,9 @@ if __name__ == "__main__":
     mtcnn = MTCNN(image_size=128, margin=50)
     resnet = InceptionResnetV1(pretrained='vggface2').eval()
     
-    dataset_root = "Dataset/LRS3"
-    trans_dict = {"pretrain_wav_200":"train", "trainval_wav_200":"valid"}
-    for type_ in ["pretrain_wav_200", "trainval_wav_200"]:
-        video_paths = [i.replace(".wav", ".mp4").replace("_wav_200","") for i in glob(os.path.join(dataset_root, type_, "*/*.wav"))]
-        spk_ids = [i.split("/")[-2] for i in video_paths]
-        wav_ids = [os.path.basename(i)[:-4] for i in video_paths]
-        save_root = "Dataset/LRS3/pwg_vqmivc/" + trans_dict[type_]
-        Parallel(n_jobs=4)(delayed(extract_face_embs)(video_paths[i], mtcnn, resnet, spk_ids[i], wav_ids[i], save_root) for i in tqdm(range(len(video_paths))))
+    dataset_root = "/data0/yfliu/lrs3"
+    video_paths = glob(os.path.join('/data0/yfliu/lrs3/test', "*/*.mp4"))
+    spk_ids = [i.split("/")[-2] for i in video_paths]
+    wav_ids = [os.path.basename(i)[:-4] for i in video_paths]
+    save_root = "/data0/yfliu/lrs3/pwg_vqmivc/test"
+    Parallel(n_jobs=4)(delayed(extract_face_embs)(video_paths[i], mtcnn, resnet, spk_ids[i], wav_ids[i], save_root) for i in tqdm(range(len(video_paths))))

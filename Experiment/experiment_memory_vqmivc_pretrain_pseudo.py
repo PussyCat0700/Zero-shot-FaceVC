@@ -423,7 +423,7 @@ class Facevoice_memory_vqmivc_pretrain_pseudo(ExperimentBuilder):
         return metrics
 
 
-    def get_src_tar_paths(self, infer_dataset='LRS3'):
+    def get_src_tar_paths(self):
         src_speaker_dict = {}
         tar_speaker_dict = {}
         
@@ -476,7 +476,7 @@ class Facevoice_memory_vqmivc_pretrain_pseudo(ExperimentBuilder):
     def run_inference(self, infer_dataset="LRS3"):
         self.infer_dataset = infer_dataset
         
-        self.src_speaker_dict, self.tar_speaker_dict, select_src_wav_paths, select_tar_wav_paths = self.get_src_tar_paths(infer_dataset=self.infer_dataset)
+        self.src_speaker_dict, self.tar_speaker_dict, select_src_wav_paths, select_tar_wav_paths = self.get_src_tar_paths()
         checkpoint_model_name = self.config.get("output", "checkpoint")
         output_dir = os.path.join(self.output_path, 'wav')
         print('Load From:')
@@ -525,15 +525,6 @@ class Facevoice_memory_vqmivc_pretrain_pseudo(ExperimentBuilder):
                     feat_writer[out_filename] = logmel
 
         feat_writer.close()
-        
-
-        print('synthesize waveform...')
-
-        # replace the pwg checkpoint save path 
-        cmd = ['parallel-wavegan-decode', '--checkpoint', \
-            '/home/zysheng/US_Facevc/pretrained/vqmivc/VQMIVC-pretrained models/vocoder/checkpoint-3000000steps.pkl', \
-            '--feats-scp', f'{str(output_dir)}/feats.1.scp', '--outdir', str(output_dir)]
-        subprocess.call(cmd)
         
 
 
