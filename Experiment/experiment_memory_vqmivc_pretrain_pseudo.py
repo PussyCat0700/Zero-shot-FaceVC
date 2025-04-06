@@ -9,7 +9,6 @@ from models.vqmivc_encoder import Encoder, CPCLoss_sameSeq, Encoder_lf0
 from models.vqmivc_decoder import Decoder_ac
 from models import FACE_ENCODER
 from src.logger import Logger
-from torch.nn import DataParallel as DP
 from torch.utils.data import DataLoader
 from collections import OrderedDict
 import numpy as np
@@ -20,7 +19,6 @@ from itertools import chain
 from pathlib import Path
 from src.scheduler import WarmupScheduler
 import kaldiio
-import subprocess
 from Experiment.experiment_tools import extract_logmel, seed_worker
 
 
@@ -423,43 +421,18 @@ class Facevoice_memory_vqmivc_pretrain_pseudo(ExperimentBuilder):
         return metrics
 
 
-    def get_src_tar_paths(self):
-        src_speaker_dict = {}
-        tar_speaker_dict = {}
-        
-        src_speaker_cont_path =  'test_src_speakers.txt'
-        tar_speaker_cont_path = 'test_tar_speakers.txt'
-
-        src_speaker_cont_f = open(src_speaker_cont_path,'r')
-        src_speaker_cont = src_speaker_cont_f.readlines()
-        
-        for line in src_speaker_cont:
-            spk_id = line.split('-')[0]
-            gender = line.split('-')[1][:-1]
-            src_speaker_dict[spk_id] = gender
-
-        tar_speaker_cont_f = open(tar_speaker_cont_path,'r')
-        tar_speaker_cont = tar_speaker_cont_f.readlines()
-        for line in tar_speaker_cont:
-            spk_id = line.split('-')[0]
-            gender = line.split('-')[-1][:-1]
-            tar_speaker_dict[spk_id] = gender
-
-        select_src_wav_paths = []
-        select_tar_wav_paths = []
-        for i in src_speaker_dict:
-            cur_spk_paths = glob(os.path.join(self.config.get("input", "wav_path"),i,'*.wav'))
-            random.shuffle(cur_spk_paths)
-            for wav_path in cur_spk_paths[:6]:
-                select_src_wav_paths.append(wav_path)
-
-        for i in tar_speaker_dict:      
-            cur_spk_paths = glob(os.path.join(self.config.get("input", "wav_path"),i,'*.wav'))
-            random.shuffle(cur_spk_paths)
-            for wav_path in cur_spk_paths[:3]:
-                select_tar_wav_paths.append(wav_path)
-        print(len(select_src_wav_paths), len(select_tar_wav_paths))
-        return src_speaker_dict, tar_speaker_dict, select_src_wav_paths, select_tar_wav_paths
+    def get_src_tar_paths(self, txt_path):
+        src_wav_paths, tar_wav_paths = [], []
+        with open(txt_path, 'r') as fr:
+            for line in fr.readlines():
+                line = line.strip()
+                _, src_wav, tar_wav = line.split(' ')
+                src_wav = src_wav.replace('/video/', '/audio/').replace('.mp4', '.wav')
+                tar_wav = tar_wav.replace('/video/', '/audio/').replace('.mp4', '.wav')
+                src_wav_paths.append(src_wav)
+                tar_wav_paths.append(tar_wav)
+        return src_wav_paths, tar_wav_paths
+            
         
         
     def get_save_path(self, src_wav_path, ref_wav_path):
@@ -468,20 +441,21 @@ class Facevoice_memory_vqmivc_pretrain_pseudo(ExperimentBuilder):
 
         src_wav_id = src_wav_path.split('/')[-1][:-4]
         ref_wav_id = ref_wav_path.split('/')[-1][:-4]
-        output_filename_suffix =  ref_spk[:4] + '_' + ref_wav_id + '_'+ \
-            src_spk[:4] + '_' + src_wav_id + '_' + self.src_speaker_dict[src_spk] + '2' + self.tar_speaker_dict[ref_spk]
+        output_filename_suffix =  f'{src_spk}_{src_wav_id}_test_{ref_spk}_{ref_wav_id}'
         return output_filename_suffix
         
 
     def run_inference(self, infer_dataset="LRS3"):
+        speaker_dir = '/home/yfliu/hifi-gan/test_speakers/'
         self.infer_dataset = infer_dataset
-        
-        self.src_speaker_dict, self.tar_speaker_dict, select_src_wav_paths, select_tar_wav_paths = self.get_src_tar_paths()
+        src_wav_paths_0, tar_wav_paths_0 = self.get_src_tar_paths(speaker_dir+'N.txt')
+        src_wav_paths_1, tar_wav_paths_1 = self.get_src_tar_paths(speaker_dir+'P.txt')
+        midnames = ['test_samples_N+swapped', 'test_samples_P+swapped']
+        src_wav_paths = [src_wav_paths_0, src_wav_paths_1]
+        tar_wav_paths = [tar_wav_paths_0, tar_wav_paths_1]
         checkpoint_model_name = self.config.get("output", "checkpoint")
-        output_dir = os.path.join(self.output_path, 'wav')
         print('Load From:')
         print(checkpoint_model_name)
-        os.makedirs(output_dir, exist_ok=True)
         checkpoint = torch.load(checkpoint_model_name, map_location=lambda storage, loc: storage)
         self.encoder.load_state_dict(checkpoint['encoder'])
         self.encoder_spk.load_state_dict(checkpoint['encoder_spk'])
@@ -497,9 +471,11 @@ class Facevoice_memory_vqmivc_pretrain_pseudo(ExperimentBuilder):
         std = mel_stats[1]
 
 
-        feat_writer = kaldiio.WriteHelper("ark,scp:{o}.ark,{o}.scp".format(o=str(output_dir)+'/feats.1'))
-        for src_wav_path in tqdm(select_src_wav_paths):
-            for ref_wav_path in select_tar_wav_paths:
+        for (midname, select_src_wav_paths, select_tar_wav_paths) in zip(midnames, src_wav_paths, tar_wav_paths):
+            output_dir = os.path.join(self.output_path, midname)
+            os.makedirs(output_dir, exist_ok=True)
+            feat_writer = kaldiio.WriteHelper("ark,scp:{o}.ark,{o}.scp".format(o=str(output_dir)+'/feats.1'))
+            for src_wav_path, ref_wav_path in tqdm(zip(select_src_wav_paths, select_tar_wav_paths)):
                 mel, lf0 = extract_logmel(src_wav_path, mean, std)
                 ref_mel, _ = extract_logmel(ref_wav_path, mean, std)
                 ref_speaker_id = ref_wav_path.split('/')[-2]

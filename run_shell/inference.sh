@@ -13,4 +13,6 @@ python Tools/modify_config.py --config_file $config_file --inference_gpu $infere
 python inference.py --config_file $config_file
 
 parallel-wavegan-decode --checkpoint '/data0/yfliu/outputs/zero_shot_facevc/vqmivc/VQMIVC-pretrained models/vocoder/checkpoint-3000000steps.pkl' \
-            --scp $output_root/wav/feats.1.scp --outdir $output_root/wav
+            --scp $output_root/test_samples_N+swapped/feats.1.scp --outdir $output_root/test_samples_N+swapped
+parallel-wavegan-decode --checkpoint '/data0/yfliu/outputs/zero_shot_facevc/vqmivc/VQMIVC-pretrained models/vocoder/checkpoint-3000000steps.pkl' \
+            --scp $output_root/test_samples_P+swapped/feats.1.scp --outdir $output_root/test_samples_P+swapped
