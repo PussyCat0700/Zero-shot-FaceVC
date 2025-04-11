@@ -17,6 +17,7 @@ def extract_res_emb(wav_path, save_path, encoder):
     
     
 def extract_lrs3_dataset():
+    # Not needed. Just add soft link.
     wav_paths = glob(os.path.join("/data0/yfliu/lrs3/audio/test", "*/*.wav"))
     save_paths = [i.replace("pwg_vqmivc/test/rese+emb") for i in wav_paths]
     # Looks like they can support GPU here.

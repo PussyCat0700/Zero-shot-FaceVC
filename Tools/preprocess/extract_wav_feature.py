@@ -73,8 +73,8 @@ def save_logmel(save_root, wav_name, melinfo, mode):
     return mel_len, mel_save_path, lf0_save_path
 
 
-data_root = '/data0/yfliu/lrs3/audio/test'
-save_root = '/data0/yfliu/lrs3/pwg_vqmivc'
+data_root = '/data0/yfliu/lrs3/audio/noise/test'
+save_root = '/data0/yfliu/lrs3/pwg_vqmivc/noise'
 os.makedirs(save_root, exist_ok=True)
 
 wavs_names = [path.split('/')[-2] + '_' + os.path.basename(path)[:-4] for path in glob(os.path.join(data_root,"*/*.wav"))]

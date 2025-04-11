@@ -476,6 +476,8 @@ class Facevoice_memory_vqmivc_pretrain_pseudo(ExperimentBuilder):
             os.makedirs(output_dir, exist_ok=True)
             feat_writer = kaldiio.WriteHelper("ark,scp:{o}.ark,{o}.scp".format(o=str(output_dir)+'/feats.1'))
             for src_wav_path, ref_wav_path in tqdm(zip(select_src_wav_paths, select_tar_wav_paths)):
+                src_wav_path = src_wav_path.replace('/audio/', '/audio/noise/')
+                ref_wav_path = ref_wav_path.replace('/audio/', '/audio/noise/')
                 mel, lf0 = extract_logmel(src_wav_path, mean, std)
                 ref_mel, _ = extract_logmel(ref_wav_path, mean, std)
                 ref_speaker_id = ref_wav_path.split('/')[-2]
