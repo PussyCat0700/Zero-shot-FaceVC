@@ -146,3 +146,5 @@ cython_debug/
 
 *.pt
 events.out.*
+*.out
+*.err
