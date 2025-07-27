@@ -5,8 +5,8 @@ set -e
 exp_name=zero_shot_facevc
 inference_gpu=0
 
-config_file=configs/zero_shot_facevc.ini
-output_root=/data0/yfliu/outputs/zero_shot_facevc
+config_file=configs/zero_shot_facevc_vox2.ini
+output_root=/data0/yfliu/outputs/zero_shot_facevc/vox2
 
 python Tools/modify_config.py --config_file $config_file --inference_gpu $inference_gpu --output_root $output_root
 

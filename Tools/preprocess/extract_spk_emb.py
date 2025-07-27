@@ -17,7 +17,7 @@ def extract_res_emb(wav_path, save_path, encoder):
     
     
 def extract_lrs3_dataset():
-    wav_paths = glob(os.path.join("/data0/yfliu/lrs3/audio/test", "*/*.wav"))
+    wav_paths = glob(os.path.join("/data0/yfliu/voxceleb2/audio/test/mp4", "*/*/*.wav"))
     save_paths = [i.replace("pwg_vqmivc/test/rese+emb") for i in wav_paths]
     # Looks like they can support GPU here.
     encoder = VoiceEncoder()

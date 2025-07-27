@@ -436,17 +436,14 @@ class Facevoice_memory_vqmivc_pretrain_pseudo(ExperimentBuilder):
         
         
     def get_save_path(self, src_wav_path, ref_wav_path):
-        src_spk = src_wav_path.split('/')[-2]
-        ref_spk = ref_wav_path.split('/')[-2]
-
-        src_wav_id = src_wav_path.split('/')[-1][:-4]
-        ref_wav_id = ref_wav_path.split('/')[-1][:-4]
-        output_filename_suffix =  f'{src_spk}_{src_wav_id}_test_{ref_spk}_{ref_wav_id}'
+        src_filename = '_'.join(src_wav_path.split('/')[-3:])[:-4]
+        tgt_filename = '_'.join(ref_wav_path.split('/')[-3:])[:-4]
+        output_filename_suffix =  f'{src_filename}_test_{tgt_filename}'
         return output_filename_suffix
         
 
     def run_inference(self, infer_dataset="LRS3"):
-        speaker_dir = '/home/yfliu/hifi-gan/test_speakers/'
+        speaker_dir = '/data0/yfliu/voxceleb2/'
         self.infer_dataset = infer_dataset
         src_wav_paths_0, tar_wav_paths_0 = self.get_src_tar_paths(speaker_dir+'N.txt')
         src_wav_paths_1, tar_wav_paths_1 = self.get_src_tar_paths(speaker_dir+'P.txt')
@@ -466,7 +463,7 @@ class Facevoice_memory_vqmivc_pretrain_pseudo(ExperimentBuilder):
         self.decoder.eval()
 
         mel_stats = np.load(os.path.join(self.config.get("input","data_path"),"mel_stats_" + self.config.get("input","spk_num") + ".npy"))
-
+        fw = open(os.path.join(self.output_path, 'missing.list'), 'w')
         mean = mel_stats[0]
         std = mel_stats[1]
 
@@ -478,11 +475,14 @@ class Facevoice_memory_vqmivc_pretrain_pseudo(ExperimentBuilder):
             for src_wav_path, ref_wav_path in tqdm(zip(select_src_wav_paths, select_tar_wav_paths)):
                 mel, lf0 = extract_logmel(src_wav_path, mean, std)
                 ref_mel, _ = extract_logmel(ref_wav_path, mean, std)
-                ref_speaker_id = ref_wav_path.split('/')[-2]
-                ref_wav_id = ref_wav_path.split('/')[-1][:-4]
-                
-                face_emb = np.load(os.path.join(self.config.get("input","data_path"),'test',self.config.get("model","face_type").split('_')[0],
-                                ref_speaker_id, ref_speaker_id + '_' + ref_wav_id +'.npy'))
+                ref_speaker_id = ref_wav_path.split('/')[-3]
+                ref_wav_id = '_'.join(ref_wav_path.split('/')[-3:])[:-4]
+                face_emb_path = os.path.join(self.config.get("input","data_path"),'test',self.config.get("model","face_type").split('_')[0],
+                                ref_speaker_id, ref_speaker_id+'_'+ref_wav_id +'.npy')
+                if not os.path.exists(face_emb_path):
+                    fw.write(face_emb_path+'\n')
+                    continue
+                face_emb = np.load(face_emb_path)
                 mel = torch.FloatTensor(mel.T).unsqueeze(0).cuda()
                 lf0 = torch.FloatTensor(lf0).unsqueeze(0).cuda()
                 ref_mel = torch.FloatTensor(ref_mel.T).unsqueeze(0).cuda()

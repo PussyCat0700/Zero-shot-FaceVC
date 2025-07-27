@@ -48,7 +48,7 @@ def extract_logmel(wav_path, sr=16000):
     lf0 = f0.copy()
     lf0[nonzeros_indices] = np.log(f0[nonzeros_indices]) # for f0(Hz), lf0 > 0 when f0 != 0
                 
-    wav_name = wav_path.split('/')[-2] + '_' + os.path.basename(wav_path)[:-4]
+    wav_name = '_'.join(wav_path.split('/')[-3:])[:-4]
     # print(wav_name, mel.shape, duration)
     return wav_name, mel, lf0, mel.shape[0]
 
@@ -66,23 +66,23 @@ def save_one_file(save_path, arr):
 def save_logmel(save_root, wav_name, melinfo, mode):
     mel, lf0, mel_len = melinfo
     spk = wav_name.split('_')[0]
-    mel_save_path = f'{save_root}/{mode}/mels_200/{spk}/{wav_name}.npy'
-    lf0_save_path = f'{save_root}/{mode}/lf0_200/{spk}/{wav_name}.npy'
+    mel_save_path = f'{save_root}/{mode}/mels_118/{spk}/{wav_name}.npy'
+    lf0_save_path = f'{save_root}/{mode}/lf0_118/{spk}/{wav_name}.npy'
     save_one_file(mel_save_path, mel)
     save_one_file(lf0_save_path, lf0)
     return mel_len, mel_save_path, lf0_save_path
 
 
-data_root = '/data0/yfliu/lrs3/audio/test'
-save_root = '/data0/yfliu/lrs3/pwg_vqmivc'
+data_root = '/data0/yfliu/voxceleb2/audio/test/mp4'
+save_root = '/data0/yfliu/voxceleb2/pwg_vqmivc'
 os.makedirs(save_root, exist_ok=True)
 
-wavs_names = [path.split('/')[-2] + '_' + os.path.basename(path)[:-4] for path in glob(os.path.join(data_root,"*/*.wav"))]
+wavs_names = ['_'.join(path.split('/')[-3:])[:-4] for path in glob(os.path.join(data_root,"*/*/*.wav"))]
 print(len(wavs_names))
 
 # extract log-mel
 print('extract log-mel...')
-train_all_wavs = glob(f'{data_root}/*/*.wav')
+train_all_wavs = glob(f'{data_root}/*/*/*.wav')
 all_wavs = []
 for i in train_all_wavs:
     all_wavs.append(i)
@@ -107,7 +107,9 @@ mels = np.concatenate(mels, 0)
 mean = np.mean(mels, 0)
 std = np.std(mels, 0)
 mel_stats = np.concatenate([mean.reshape(1,-1), std.reshape(1,-1)], 0)
-np.save(f'{save_root}/mel_stats_200.npy', mel_stats)
+np.save(f'{save_root}/mel_stats_118.npy', mel_stats)
+print('done with mel_stats')
+exit(0)
 
 results = Parallel(n_jobs=-1)(delayed(normalize_logmel)(wav_name, wn2mel[wav_name][0], mean, std) for wav_name in tqdm(wn2mel.keys()))
 wn2mel_new = {}
@@ -130,9 +132,9 @@ def save_json(save_root, results, mode):
     fp.close()
     
 
-# save_json(save_root, train_results, 'train_200')
-# save_json(save_root, valid_results, 'valid_200')
-save_json(save_root, test_results, 'test_200')
+# save_json(save_root, train_results, 'train_118')
+# save_json(save_root, valid_results, 'valid_118')
+save_json(save_root, test_results, 'test_118')
 
 
     
